@@ -152,3 +152,7 @@ if __name__ == "__main__":
         db.create_all()
 
     app.run(debug=True)
+else:
+    # Ensure tables exist when running under WSGI servers like gunicorn
+    with app.app_context():
+        db.create_all()
