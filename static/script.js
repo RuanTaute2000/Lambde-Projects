@@ -42,4 +42,13 @@ window.filterProjects = function(){
   });
 }
 
+// Material search filter within a project
+window.filterMaterials = function(){
+  const term = (document.getElementById("material-search")?.value || "").toLowerCase();
+  document.querySelectorAll(".material-row").forEach(row => {
+    const text = row.innerText.toLowerCase();
+    row.style.display = text.includes(term) ? "" : "none";
+  });
+}
+
 });

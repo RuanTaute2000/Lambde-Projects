@@ -16,6 +16,8 @@ def ensure_schema():
         with db.engine.connect() as conn:
             conn.execute(db.text("ALTER TABLE material ADD COLUMN part_number VARCHAR(100)"))
             conn.commit()
+    # create new tables if missing
+    db.create_all()
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -46,6 +48,16 @@ class Material(db.Model):
     part_number = db.Column(db.String(100))
     quantity = db.Column(db.Integer, default=0)
     project = db.relationship('Project', backref=db.backref('materials', lazy=True))
+
+class MaterialLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    material_name = db.Column(db.String(100))
+    part_number = db.Column(db.String(100))
+    quantity = db.Column(db.Integer)
+    taken_by = db.Column(db.String(100))
+    action = db.Column(db.String(20))  # Added / Taken / Deleted
+    timestamp = db.Column(db.DateTime, server_default=db.func.now())
 
 @app.route("/")
 def login_page():
@@ -219,6 +231,15 @@ def add_material(project_id):
         quantity=int(request.form.get("quantity", 0))
     )
     db.session.add(material)
+    db.session.flush()
+    db.session.add(MaterialLog(
+        project_id=project_id,
+        material_name=material.name,
+        part_number=material.part_number,
+        quantity=material.quantity,
+        taken_by=session.get("user"),
+        action="Added"
+    ))
     db.session.commit()
     return redirect(f"/project/{project_id}")
 
@@ -233,8 +254,75 @@ def take_material(material_id):
         amount = 0
     if material.quantity > 0:
         material.quantity = max(0, material.quantity - amount)
+        db.session.add(MaterialLog(
+            project_id=material.project_id,
+            material_name=material.name,
+            part_number=material.part_number,
+            quantity=amount,
+            taken_by=session.get("user"),
+            action="Taken"
+        ))
         db.session.commit()
     return redirect(f"/project/{material.project_id}")
+
+
+@app.route("/delete_material/<int:material_id>")
+def delete_material(material_id):
+    if "user" not in session:
+        return redirect("/")
+    if session.get("role") not in ["Project Lead", "Workshop Manager"]:
+        return "Not allowed"
+    material = Material.query.get_or_404(material_id)
+    db.session.add(MaterialLog(
+        project_id=material.project_id,
+        material_name=material.name,
+        part_number=material.part_number,
+        quantity=material.quantity,
+        taken_by=session.get("user"),
+        action="Deleted"
+    ))
+    db.session.delete(material)
+    db.session.commit()
+    return redirect(f"/project/{material.project_id}")
+
+
+@app.route("/delete_project/<int:project_id>")
+def delete_project(project_id):
+    if "user" not in session:
+        return redirect("/")
+    if session.get("role") not in ["Project Lead", "Workshop Manager"]:
+        return "Not allowed"
+    project = Project.query.get_or_404(project_id)
+    # remove materials and log deletion
+    for m in project.materials:
+        db.session.add(MaterialLog(
+            project_id=project.id,
+            material_name=m.name,
+            part_number=m.part_number,
+            quantity=m.quantity,
+            taken_by=session.get("user"),
+            action="Deleted"
+        ))
+        db.session.delete(m)
+    db.session.delete(project)
+    db.session.commit()
+    return redirect("/projects")
+
+
+@app.route("/project/<int:project_id>/logs")
+def project_logs(project_id):
+    if "user" not in session:
+        return redirect("/")
+    project = Project.query.get_or_404(project_id)
+    logs = MaterialLog.query.filter_by(project_id=project_id)\
+        .order_by(MaterialLog.timestamp.desc()).all()
+    return render_template(
+        "project_logs.html",
+        project=project,
+        logs=logs,
+        role=session.get("role"),
+        user=session.get("user")
+    )
 
 
 # PWA assets
@@ -249,12 +337,10 @@ def service_worker():
 
 if __name__ == "__main__":
     with app.app_context():
-        db.create_all()
         ensure_schema()
 
     app.run(debug=True)
 else:
     # Ensure tables exist when running under WSGI servers like gunicorn
     with app.app_context():
-        db.create_all()
         ensure_schema()

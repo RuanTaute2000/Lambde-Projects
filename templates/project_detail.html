@@ -23,6 +23,17 @@
   <h2 style="text-align:center;">{{ project.name }}</h2>
   <p style="text-align:center;">{{ project.description }}</p>
 
+  <div style="text-align:center; margin-bottom:20px;">
+    <a class="action-link" href="/project/{{project.id}}/logs">View Material Log</a>
+    {% if role in ["Project Lead", "Workshop Manager"] %}
+      | <a class="action-link" href="/delete_project/{{project.id}}" onclick="return confirm('Delete this project?');">Delete Project</a>
+    {% endif %}
+  </div>
+
+  <div class="center" style="margin-top:20px;">
+    <input id="material-search" placeholder="Search materials..." oninput="filterMaterials()">
+  </div>
+
   {% if role in ["Project Lead", "Workshop Manager"] %}
   <form action="/add_material/{{project.id}}" method="post" class="center">
     <input name="name" placeholder="Material Name" required>
@@ -40,7 +51,7 @@
       <th>Action</th>
     </tr>
     {% for material in project.materials %}
-    <tr>
+    <tr class="material-row">
       <td>{{ material.name }}</td>
       <td>{{ material.part_number }}</td>
       <td>{{ material.quantity }}</td>
@@ -49,6 +60,9 @@
           <input type="number" name="amount" min="1" value="1" style="width:80px;" {% if material.quantity == 0 %}disabled{% endif %}>
           <button type="submit" {% if material.quantity == 0 %}disabled{% endif %}>Take</button>
         </form>
+        {% if role in ["Project Lead", "Workshop Manager"] %}
+        <a class="action-link" href="/delete_material/{{material.id}}" onclick="return confirm('Delete this material?');">Delete</a>
+        {% endif %}
       </td>
     </tr>
     {% endfor %}

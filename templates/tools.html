@@ -42,6 +42,7 @@
       <th>Serial Number</th>
       <th>Status</th>
       <th>Action</th>
+      {% if role in ["Project Lead","Workshop Manager"] %}<th>Manage</th>{% endif %}
     </tr>
 
     {% for tool in tools %}
@@ -63,6 +64,11 @@
           <a class="action-link" href="/return/{{tool.id}}">Return</a>
         {% endif %}
       </td>
+      {% if role in ["Project Lead","Workshop Manager"] %}
+      <td>
+        <a class="action-link" href="/remove_tool/{{tool.id}}" onclick="return confirm('Delete this tool?');">Delete</a>
+      </td>
+      {% endif %}
     </tr>
     {% endfor %}
   </table>

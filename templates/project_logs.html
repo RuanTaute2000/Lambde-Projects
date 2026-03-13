@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ project.name }} | Material Log</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2b2b2b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="/static/logo.png">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="banner">
+    <div class="banner-left">
+      <img src="/static/logo.png" alt="Lambda Projects logo">
+      <h2>LAMBDA PROJECTS</h2>
+    </div>
+    <a href="/project/{{project.id}}" class="back-btn">Back</a>
+  </div>
+
+  <h2 style="text-align:center;">Material Log - {{ project.name }}</h2>
+
+  <table>
+    <tr>
+      <th>When</th>
+      <th>User</th>
+      <th>Action</th>
+      <th>Material</th>
+      <th>Part Number</th>
+      <th>Quantity</th>
+    </tr>
+    {% for log in logs %}
+    <tr>
+      <td>{{ log.timestamp }}</td>
+      <td>{{ log.taken_by }}</td>
+      <td>{{ log.action }}</td>
+      <td>{{ log.material_name }}</td>
+      <td>{{ log.part_number }}</td>
+      <td>{{ log.quantity }}</td>
+    </tr>
+    {% endfor %}
+    {% if not logs %}
+    <tr><td colspan="6">No log entries yet.</td></tr>
+    {% endif %}
+  </table>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js'));
+    }
+  </script>
+</body>
+</html>
