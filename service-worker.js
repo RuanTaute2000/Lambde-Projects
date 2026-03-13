@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lambda-tools-v1';
+const CACHE_NAME = 'lambda-tools-v3';
 const ASSETS = [
   '/',
   '/manifest.json',
@@ -8,6 +8,7 @@ const ASSETS = [
 ];
 
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
   );
@@ -17,7 +18,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys => Promise.all(
       keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-    ))
+    )).then(() => self.clients.claim())
   );
 });
 
@@ -25,15 +26,41 @@ self.addEventListener('fetch', event => {
   const { request } = event;
   if (request.method !== 'GET') return;
 
-  event.respondWith(
-    caches.match(request).then(cached => {
-      const networkFetch = fetch(request).then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
-        return response;
-      }).catch(() => cached);
+  // Always try network first for navigation/HTML to avoid stale pages
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
 
-      return cached || networkFetch;
-    })
+  // Cache-first for static assets
+  if (request.url.includes('/static/') || request.url.endsWith('manifest.json')) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const network = fetch(request).then(res => {
+          caches.open(CACHE_NAME).then(cache => cache.put(request, res.clone()));
+          return res;
+        });
+        return cached || network;
+      })
+    );
+    return;
+  }
+
+  // Default: network with cache fallback
+  event.respondWith(
+    fetch(request)
+      .then(res => {
+        caches.open(CACHE_NAME).then(cache => cache.put(request, res.clone()));
+        return res;
+      })
+      .catch(() => caches.match(request))
   );
 });
