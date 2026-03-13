@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lambda-tools-v4';
+const CACHE_NAME = 'lambda-tools-v5';
 const ASSETS = [
   '/',
   '/manifest.json',

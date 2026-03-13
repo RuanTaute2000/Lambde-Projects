@@ -19,24 +19,27 @@ def ensure_schema():
     # drop make column if exists (legacy)
     tool_cols = [c['name'] for c in insp.get_columns('tool')] if insp.has_table('tool') else []
     if 'make' in tool_cols:
-        with db.engine.connect() as conn:
-            conn.execute(db.text("ALTER TABLE tool RENAME TO tool_old"))
-            conn.execute(db.text("""
-                CREATE TABLE tool(
-                    id INTEGER NOT NULL,
-                    tool_type VARCHAR(100),
-                    serial VARCHAR(100),
-                    status VARCHAR(50) DEFAULT 'Available',
-                    booked_by VARCHAR(100) DEFAULT '',
-                    PRIMARY KEY (id)
-                )
-            """))
-            conn.execute(db.text("""
-                INSERT INTO tool (id, tool_type, serial, status, booked_by)
-                SELECT id, tool_type, serial, status, booked_by FROM tool_old
-            """))
-            conn.execute(db.text("DROP TABLE tool_old"))
-            conn.commit()
+        try:
+            with db.engine.connect() as conn:
+                conn.execute(db.text("ALTER TABLE tool RENAME TO tool_old"))
+                conn.execute(db.text("""
+                    CREATE TABLE tool(
+                        id INTEGER NOT NULL,
+                        tool_type VARCHAR(100),
+                        serial VARCHAR(100),
+                        status VARCHAR(50) DEFAULT 'Available',
+                        booked_by VARCHAR(100) DEFAULT '',
+                        PRIMARY KEY (id)
+                    )
+                """))
+                conn.execute(db.text("""
+                    INSERT INTO tool (id, tool_type, serial, status, booked_by)
+                    SELECT id, tool_type, serial, status, booked_by FROM tool_old
+                """))
+                conn.execute(db.text("DROP TABLE tool_old"))
+                conn.commit()
+        except Exception as exc:
+            print("Schema migration for tool table skipped due to:", exc)
     # create new tables if missing
     db.create_all()
 
