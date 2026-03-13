@@ -25,7 +25,6 @@
   {% if role in ["Project Lead","Workshop Manager"] %}
   <form action="/add_tool" method="post" class="center">
     <input name="type" placeholder="Tool Type" required>
-    <input name="make" placeholder="Make" required>
     <input name="serial" placeholder="Serial Number" required>
     <button>Add Tool</button>
   </form>
@@ -38,7 +37,6 @@
   <table data-role="{{role}}">
     <tr>
       <th>Tool Type</th>
-      <th>Make</th>
       <th>Serial Number</th>
       <th>Status</th>
       <th>Action</th>
@@ -48,7 +46,6 @@
     {% for tool in tools %}
     <tr class="tool-row" data-id="{{tool.id}}" data-role="{{role}}">
       <td>{{tool.tool_type}}</td>
-      <td>{{tool.make}}</td>
       <td>{{tool.serial}}</td>
       <td>
         {% if tool.status == "Available" %}

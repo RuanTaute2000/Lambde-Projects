@@ -16,6 +16,27 @@ def ensure_schema():
         with db.engine.connect() as conn:
             conn.execute(db.text("ALTER TABLE material ADD COLUMN part_number VARCHAR(100)"))
             conn.commit()
+    # drop make column if exists (legacy)
+    tool_cols = [c['name'] for c in insp.get_columns('tool')] if insp.has_table('tool') else []
+    if 'make' in tool_cols:
+        with db.engine.connect() as conn:
+            conn.execute(db.text("ALTER TABLE tool RENAME TO tool_old"))
+            conn.execute(db.text("""
+                CREATE TABLE tool(
+                    id INTEGER NOT NULL,
+                    tool_type VARCHAR(100),
+                    serial VARCHAR(100),
+                    status VARCHAR(50) DEFAULT 'Available',
+                    booked_by VARCHAR(100) DEFAULT '',
+                    PRIMARY KEY (id)
+                )
+            """))
+            conn.execute(db.text("""
+                INSERT INTO tool (id, tool_type, serial, status, booked_by)
+                SELECT id, tool_type, serial, status, booked_by FROM tool_old
+            """))
+            conn.execute(db.text("DROP TABLE tool_old"))
+            conn.commit()
     # create new tables if missing
     db.create_all()
 
@@ -31,7 +52,6 @@ class User(db.Model):
 class Tool(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     tool_type = db.Column(db.String(100))
-    make = db.Column(db.String(100))
     serial = db.Column(db.String(100))
     status = db.Column(db.String(50), default="Available")
     booked_by = db.Column(db.String(100), default="")
@@ -124,7 +144,6 @@ def add_tool():
 
     tool = Tool(
         tool_type=request.form["type"],
-        make=request.form["make"],
         serial=request.form["serial"]
     )
 
