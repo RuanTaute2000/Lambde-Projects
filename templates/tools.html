@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Tools | Lambda Projects</title>
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#2b2b2b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <link rel="apple-touch-icon" href="/static/logo.png">
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/script.js" defer></script>
+</head>
+<body>
+
+  <div class="banner">
+    <div class="banner-left">
+      <img src="/static/logo.png" alt="Lambda Projects logo">
+      <h2>LAMBDA PROJECTS</h2>
+    </div>
+    <a href="javascript:history.back()" class="back-btn">Back</a>
+  </div>
+
+  {% if role in ["Project Lead","Workshop Manager"] %}
+  <form action="/add_tool" method="post" class="center">
+    <input name="type" placeholder="Tool Type" required>
+    <input name="make" placeholder="Make" required>
+    <input name="serial" placeholder="Serial Number" required>
+    <button>Add Tool</button>
+  </form>
+  {% endif %}
+
+  <table>
+    <tr>
+      <th>Tool Type</th>
+      <th>Make</th>
+      <th>Serial Number</th>
+      <th>Status</th>
+      <th>Action</th>
+    </tr>
+
+    {% for tool in tools %}
+    <tr class="tool-row" data-id="{{tool.id}}" data-role="{{role}}">
+      <td>{{tool.tool_type}}</td>
+      <td>{{tool.make}}</td>
+      <td>{{tool.serial}}</td>
+      <td>
+        {% if tool.status == "Available" %}
+          Available
+        {% else %}
+          Booked by {{tool.booked_by}}
+        {% endif %}
+      </td>
+      <td>
+        {% if tool.status == "Available" %}
+          <a class="action-link" href="/book/{{tool.id}}">Book</a>
+        {% else %}
+          <a class="action-link" href="/return/{{tool.id}}">Return</a>
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('/service-worker.js'));
+    }
+  </script>
+</body>
+</html>
