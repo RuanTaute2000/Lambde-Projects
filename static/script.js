@@ -30,7 +30,8 @@ document.addEventListener("DOMContentLoaded", function(){
     row.addEventListener("contextmenu", e => {
       if (role !== "Project Lead" && role !== "Workshop Manager") return;
       e.preventDefault();
-      if (confirm("Delete this material?")) {
+      const name = row.dataset.name || "this material";
+      if (confirm(`Delete ${name}?`)) {
         window.location = "/delete_material/" + row.dataset.id;
       }
     });

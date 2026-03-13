@@ -51,7 +51,7 @@
       <th>Action</th>
     </tr>
     {% for material in project.materials %}
-    <tr class="material-row" data-id="{{material.id}}">
+    <tr class="material-row" data-id="{{material.id}}" data-name="{{ material.name }}">
       <td>{{ material.name }}</td>
       <td>{{ material.part_number }}</td>
       <td>{{ material.quantity }}</td>
