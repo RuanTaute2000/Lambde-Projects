@@ -28,9 +28,13 @@
   </form>
   {% endif %}
 
-  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:20px;">
+  <div class="center" style="margin-top:40px;">
+    <input id="project-search" placeholder="Search projects..." oninput="filterProjects()">
+  </div>
+
+  <div id="project-grid" style="display:flex;flex-wrap:wrap;justify-content:center;gap:20px;">
     {% for project in projects %}
-      <div class="card" onclick="location.href='/project/{{project.id}}'">
+      <div class="card project-card" data-name="{{project.name | lower}}" onclick="location.href='/project/{{project.id}}'">
         <strong>{{project.name}}</strong><br>
         <small>{{project.description}}</small>
       </div>

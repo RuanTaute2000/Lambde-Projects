@@ -7,6 +7,16 @@ app.secret_key = "lambda_secret"
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
 db = SQLAlchemy(app)
 
+
+def ensure_schema():
+    """Lightweight guard to add new columns when the DB already exists."""
+    insp = db.inspect(db.engine)
+    material_cols = [c['name'] for c in insp.get_columns('material')] if insp.has_table('material') else []
+    if 'part_number' not in material_cols and insp.has_table('material'):
+        with db.engine.connect() as conn:
+            conn.execute(db.text("ALTER TABLE material ADD COLUMN part_number VARCHAR(100)"))
+            conn.commit()
+
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50))
@@ -33,6 +43,7 @@ class Material(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
     name = db.Column(db.String(100))
+    part_number = db.Column(db.String(100))
     quantity = db.Column(db.Integer, default=0)
     project = db.relationship('Project', backref=db.backref('materials', lazy=True))
 
@@ -204,6 +215,7 @@ def add_material(project_id):
     material = Material(
         project_id=project_id,
         name=request.form["name"],
+        part_number=request.form.get("part_number", ""),
         quantity=int(request.form.get("quantity", 0))
     )
     db.session.add(material)
@@ -216,8 +228,11 @@ def take_material(material_id):
     if "user" not in session:
         return redirect("/")
     material = Material.query.get_or_404(material_id)
+    amount = int(request.form.get("amount", 1))
+    if amount < 0:
+        amount = 0
     if material.quantity > 0:
-        material.quantity -= 1
+        material.quantity = max(0, material.quantity - amount)
         db.session.commit()
     return redirect(f"/project/{material.project_id}")
 
@@ -235,9 +250,11 @@ def service_worker():
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
+        ensure_schema()
 
     app.run(debug=True)
 else:
     # Ensure tables exist when running under WSGI servers like gunicorn
     with app.app_context():
         db.create_all()
+        ensure_schema()
