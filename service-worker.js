@@ -1,10 +1,13 @@
-const CACHE_NAME = 'lambda-tools-v3';
+const CACHE_NAME = 'lambda-tools-v4';
 const ASSETS = [
   '/',
   '/manifest.json',
   '/static/style.css',
   '/static/script.js',
-  '/static/logo.png'
+  '/static/logo.png',
+  '/static/icon-192.png',
+  '/static/icon-512.png',
+  '/static/offline.html'
 ];
 
 self.addEventListener('install', event => {
@@ -35,7 +38,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
           return response;
         })
-        .catch(() => caches.match(request))
+        .catch(() => caches.match('/static/offline.html'))
     );
     return;
   }
