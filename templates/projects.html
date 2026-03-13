@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Home | Lambda Projects</title>
+  <title>Projects | Lambda Projects</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2b2b2b">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,24 +12,32 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
   <div class="banner">
     <div class="banner-left">
       <img src="/static/logo.png" alt="Lambda Projects logo">
       <h2>LAMBDA PROJECTS</h2>
     </div>
-    <a href="javascript:history.back()" class="back-btn">Back</a>
+    <a href="/home" class="back-btn">Back</a>
   </div>
 
-  <h2 style="text-align:center;">Welcome {{name}}</h2>
+  {% if role in ["Project Lead", "Workshop Manager"] %}
+  <form action="/add_project" method="post" class="center">
+    <input name="name" placeholder="Project Name" required>
+    <input name="description" placeholder="Short Description">
+    <button>Add Project</button>
+  </form>
+  {% endif %}
 
-  <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
-    <div class="card" onclick="location.href='/tools'">
-      Lambda Project Tools
-    </div>
-    <div class="card" onclick="location.href='/projects'">
-      Lambda Project Inventory
-    </div>
+  <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:20px;">
+    {% for project in projects %}
+      <div class="card" onclick="location.href='/project/{{project.id}}'">
+        <strong>{{project.name}}</strong><br>
+        <small>{{project.description}}</small>
+      </div>
+    {% endfor %}
+    {% if not projects %}
+      <p style="text-align:center;">No projects yet.</p>
+    {% endif %}
   </div>
 
   <script>
