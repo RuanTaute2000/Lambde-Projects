@@ -1,54 +1,66 @@
 document.addEventListener("DOMContentLoaded", function(){
 
-const rows = document.querySelectorAll(".tool-row");
+  // Context delete handlers
+  const role = document.body.dataset.role;
 
-rows.forEach(row => {
-
-row.addEventListener("contextmenu", function(e){
-
-e.preventDefault();
-
-const role = row.dataset.role;
-
-if(role === "Project Lead" || role === "Workshop Manager"){
-
-if(confirm("Remove this tool?")){
-
-window.location = "/remove_tool/" + row.dataset.id;
-
-}
-
-}
-
-});
-
-});
-
-// Tool search filter
-window.filterTools = function(){
-  const term = (document.getElementById("tool-search")?.value || "").toLowerCase();
+  // Tools
   document.querySelectorAll(".tool-row").forEach(row => {
-    const text = row.innerText.toLowerCase();
-    row.style.display = text.includes(term) ? "" : "none";
+    row.addEventListener("contextmenu", e => {
+      if (role !== "Project Lead" && role !== "Workshop Manager") return;
+      e.preventDefault();
+      if (confirm("Delete this tool?")) {
+        window.location = "/remove_tool/" + row.dataset.id;
+      }
+    });
   });
-}
 
-// Project search filter
-window.filterProjects = function(){
-  const term = (document.getElementById("project-search")?.value || "").toLowerCase();
+  // Projects
   document.querySelectorAll(".project-card").forEach(card => {
-    const name = card.dataset.name || "";
-    card.style.display = name.includes(term) ? "" : "none";
+    card.addEventListener("contextmenu", e => {
+      if (role !== "Project Lead" && role !== "Workshop Manager") return;
+      e.preventDefault();
+      if (confirm("Delete this project? This also deletes its materials.")) {
+        window.location = "/delete_project/" + card.dataset.id;
+      }
+    });
   });
-}
 
-// Material search filter within a project
-window.filterMaterials = function(){
-  const term = (document.getElementById("material-search")?.value || "").toLowerCase();
+  // Materials
   document.querySelectorAll(".material-row").forEach(row => {
-    const text = row.innerText.toLowerCase();
-    row.style.display = text.includes(term) ? "" : "none";
+    row.addEventListener("contextmenu", e => {
+      if (role !== "Project Lead" && role !== "Workshop Manager") return;
+      e.preventDefault();
+      if (confirm("Delete this material?")) {
+        window.location = "/delete_material/" + row.dataset.id;
+      }
+    });
   });
-}
+
+  // Tool search filter
+  window.filterTools = function(){
+    const term = (document.getElementById("tool-search")?.value || "").toLowerCase();
+    document.querySelectorAll(".tool-row").forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(term) ? "" : "none";
+    });
+  }
+
+  // Project search filter
+  window.filterProjects = function(){
+    const term = (document.getElementById("project-search")?.value || "").toLowerCase();
+    document.querySelectorAll(".project-card").forEach(card => {
+      const name = card.dataset.name || "";
+      card.style.display = name.includes(term) ? "" : "none";
+    });
+  }
+
+  // Material search filter within a project
+  window.filterMaterials = function(){
+    const term = (document.getElementById("material-search")?.value || "").toLowerCase();
+    document.querySelectorAll(".material-row").forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(term) ? "" : "none";
+    });
+  }
 
 });

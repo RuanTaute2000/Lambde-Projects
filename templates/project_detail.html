@@ -11,7 +11,7 @@
   <link rel="apple-touch-icon" href="/static/logo.png">
   <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
+<body data-role="{{role}}">
   <div class="banner">
     <div class="banner-left">
       <img src="/static/logo.png" alt="Lambda Projects logo">
@@ -24,9 +24,9 @@
   <p style="text-align:center;">{{ project.description }}</p>
 
   <div style="text-align:center; margin-bottom:20px;">
-    <a class="action-link" href="/project/{{project.id}}/logs">View Material Log</a>
+    <a class="pill-btn" href="/project/{{project.id}}/logs">📜 Material Log</a>
     {% if role in ["Project Lead", "Workshop Manager"] %}
-      | <a class="action-link" href="/delete_project/{{project.id}}" onclick="return confirm('Delete this project?');">Delete Project</a>
+      | <span class="pill-btn danger" onclick="if(confirm('Delete this project?')) location.href='/delete_project/{{project.id}}';">🗑 Delete Project</span>
     {% endif %}
   </div>
 
@@ -51,7 +51,7 @@
       <th>Action</th>
     </tr>
     {% for material in project.materials %}
-    <tr class="material-row">
+    <tr class="material-row" data-id="{{material.id}}">
       <td>{{ material.name }}</td>
       <td>{{ material.part_number }}</td>
       <td>{{ material.quantity }}</td>
@@ -60,9 +60,6 @@
           <input type="number" name="amount" min="1" value="1" style="width:80px;" {% if material.quantity == 0 %}disabled{% endif %}>
           <button type="submit" {% if material.quantity == 0 %}disabled{% endif %}>Take</button>
         </form>
-        {% if role in ["Project Lead", "Workshop Manager"] %}
-        <a class="action-link" href="/delete_material/{{material.id}}" onclick="return confirm('Delete this material?');">Delete</a>
-        {% endif %}
       </td>
     </tr>
     {% endfor %}

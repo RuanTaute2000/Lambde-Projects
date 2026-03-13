@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/script.js" defer></script>
 </head>
-<body>
+<body data-role="{{role}}">
 
   <div class="banner">
     <div class="banner-left">
@@ -35,7 +35,7 @@
     <input id="tool-search" placeholder="Search tools..." oninput="filterTools()">
   </div>
 
-  <table>
+  <table data-role="{{role}}">
     <tr>
       <th>Tool Type</th>
       <th>Make</th>

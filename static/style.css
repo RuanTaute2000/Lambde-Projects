@@ -86,3 +86,18 @@ font-weight:bold;
 .action-link:hover{
 text-decoration:underline;
 }
+
+.pill-btn{
+  display:inline-block;
+  padding:8px 14px;
+  border-radius:999px;
+  background:#007bff;
+  color:white;
+  text-decoration:none;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+.pill-btn.danger{
+  background:#b33131;
+}
