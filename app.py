@@ -131,16 +131,18 @@ def forgot_page():
     return render_template("forgot.html")
 
 
-@app.route("/reset_password", methods=["POST"])
+@app.route("/reset_password", methods=["GET", "POST"])
 def reset_password():
+    if request.method == "GET":
+        return redirect("/forgot")
     email = request.form["email"]
     new_password = request.form["password"]
     user = User.query.filter_by(email=email).first()
     if user:
         user.password = new_password
         db.session.commit()
-        return redirect("/")
-    return "If that account exists, the password was reset."
+    # Always respond the same to avoid leaking user existence
+    return redirect("/")
 
 @app.route("/home")
 def home():
