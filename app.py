@@ -1,6 +1,10 @@
 import os
-from flask import Flask, render_template, request, redirect, session, send_from_directory
+import io
+import smtplib
+from email.message import EmailMessage
+from flask import Flask, render_template, request, redirect, session, send_from_directory, flash
 from flask_sqlalchemy import SQLAlchemy
+from openpyxl import Workbook
 
 app = Flask(__name__)
 app.secret_key = "lambda_secret"
@@ -46,6 +50,32 @@ def ensure_schema():
             print("Schema migration for tool table skipped due to:", exc)
     # create new tables if missing
     db.create_all()
+
+
+def send_mail(to_email, subject, body, attachment=None, filename=None):
+    smtp_server = os.getenv("SMTP_SERVER")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER")
+    smtp_pass = os.getenv("SMTP_PASSWORD")
+    use_tls = os.getenv("SMTP_USE_TLS", "true").lower() == "true"
+
+    if not smtp_server or not smtp_user or not smtp_pass:
+        raise RuntimeError("SMTP is not configured. Please set SMTP_SERVER, SMTP_PORT, SMTP_USER, SMTP_PASSWORD.")
+
+    msg = EmailMessage()
+    msg["From"] = smtp_user
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.set_content(body)
+
+    if attachment and filename:
+        msg.add_attachment(attachment, maintype="application", subtype="vnd.openxmlformats-officedocument.spreadsheetml.sheet", filename=filename)
+
+    with smtplib.SMTP(smtp_server, smtp_port) as server:
+        if use_tls:
+            server.starttls()
+        server.login(smtp_user, smtp_pass)
+        server.send_message(msg)
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -100,6 +130,7 @@ def login():
     if user:
         session["user"] = user.name
         session["role"] = user.role
+        session["email"] = user.email
         return redirect("/home")
 
     return "Login failed"
@@ -215,6 +246,38 @@ def return_tool(id):
     db.session.commit()
 
     return redirect("/tools")
+
+
+@app.route("/export_tools")
+def export_tools():
+    if "user" not in session:
+        return redirect("/")
+    to_email = session.get("email")
+    if not to_email:
+        return "No email on session. Please log in again."
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Tools"
+    ws.append(["Tool Type", "Serial Number", "Status", "Booked By"])
+    for t in Tool.query.order_by(Tool.tool_type).all():
+        ws.append([t.tool_type, t.serial, t.status, t.booked_by])
+
+    bio = io.BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+
+    try:
+        send_mail(
+            to_email,
+            "Lambda Projects - Tool Export",
+            "Attached is the latest tool list.",
+            attachment=bio.read(),
+            filename="tools.xlsx"
+        )
+        return "Export sent to your email."
+    except Exception as exc:
+        return f"Failed to send export: {exc}"
 
 
 # Projects inventory
