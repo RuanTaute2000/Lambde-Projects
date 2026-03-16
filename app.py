@@ -1,10 +1,14 @@
+import os
 from flask import Flask, render_template, request, redirect, session, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = "lambda_secret"
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tools.db'
+db_url = os.getenv("DATABASE_URL", "sqlite:///tools.db")
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 db = SQLAlchemy(app)
 
 
@@ -120,6 +124,23 @@ def register_user():
     db.session.commit()
 
     return redirect("/")
+
+
+@app.route("/forgot")
+def forgot_page():
+    return render_template("forgot.html")
+
+
+@app.route("/reset_password", methods=["POST"])
+def reset_password():
+    email = request.form["email"]
+    new_password = request.form["password"]
+    user = User.query.filter_by(email=email).first()
+    if user:
+        user.password = new_password
+        db.session.commit()
+        return redirect("/")
+    return "If that account exists, the password was reset."
 
 @app.route("/home")
 def home():

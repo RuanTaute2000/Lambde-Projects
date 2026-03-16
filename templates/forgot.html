@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Login | Lambda Projects</title>
+  <title>Forgot Password | Lambda Projects</title>
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#2b2b2b">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,21 +12,18 @@
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-
   <div class="banner">
     <div class="banner-left">
       <img src="/static/logo.png" alt="Lambda Projects logo">
       <h2>LAMBDA PROJECTS</h2>
     </div>
-    <a href="javascript:history.back()" class="back-btn">Back</a>
+    <a href="/" class="back-btn">Back</a>
   </div>
 
-  <form action="/login" method="post" class="center">
-    <input name="email" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button>Login</button>
-    <a href="/register">Register</a>
-    <a href="/forgot">Forgot password?</a>
+  <form action="/reset_password" method="post" class="center">
+    <input name="email" type="email" placeholder="Account email" required>
+    <input name="password" type="password" placeholder="New password" required>
+    <button>Reset Password</button>
   </form>
 
   <script>
