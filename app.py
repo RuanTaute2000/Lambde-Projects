@@ -2,7 +2,7 @@ import os
 import io
 import smtplib
 from email.message import EmailMessage
-from flask import Flask, render_template, request, redirect, session, send_from_directory, flash
+from flask import Flask, render_template, request, redirect, session, send_from_directory, send_file
 from flask_sqlalchemy import SQLAlchemy
 from openpyxl import Workbook
 
@@ -76,6 +76,19 @@ def send_mail(to_email, subject, body, attachment=None, filename=None):
             server.starttls()
         server.login(smtp_user, smtp_pass)
         server.send_message(msg)
+
+
+def build_tools_workbook():
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Tools"
+    ws.append(["Tool Type", "Serial Number", "Status", "Booked By"])
+    for t in Tool.query.order_by(Tool.tool_type).all():
+        ws.append([t.tool_type, t.serial, t.status, t.booked_by])
+    bio = io.BytesIO()
+    wb.save(bio)
+    bio.seek(0)
+    return bio
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -256,16 +269,7 @@ def export_tools():
     if not to_email:
         return "No email on session. Please log in again."
 
-    wb = Workbook()
-    ws = wb.active
-    ws.title = "Tools"
-    ws.append(["Tool Type", "Serial Number", "Status", "Booked By"])
-    for t in Tool.query.order_by(Tool.tool_type).all():
-        ws.append([t.tool_type, t.serial, t.status, t.booked_by])
-
-    bio = io.BytesIO()
-    wb.save(bio)
-    bio.seek(0)
+    bio = build_tools_workbook()
 
     try:
         send_mail(
@@ -278,6 +282,19 @@ def export_tools():
         return "Export sent to your email."
     except Exception as exc:
         return f"Failed to send export: {exc}"
+
+
+@app.route("/export_tools_download")
+def export_tools_download():
+    if "user" not in session:
+        return redirect("/")
+    bio = build_tools_workbook()
+    return send_file(
+        bio,
+        as_attachment=True,
+        download_name="tools.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
 
 
 # Projects inventory
