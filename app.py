@@ -12,13 +12,21 @@ app.secret_key = "lambda_secret"
 db_url = os.getenv("DATABASE_URL", "sqlite:///tools.db")
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+engine_opts = {"pool_pre_ping": True}
+if db_url.startswith("postgresql://"):
+    engine_opts["connect_args"] = {"connect_timeout": 5, "sslmode": "require"}
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = engine_opts
 db = SQLAlchemy(app)
 
 
 def ensure_schema():
     """Lightweight guard to add new columns when the DB already exists."""
-    insp = db.inspect(db.engine)
+    try:
+        insp = db.inspect(db.engine)
+    except Exception as exc:
+        print("DB unavailable, skipping schema check:", exc)
+        return
     material_cols = [c['name'] for c in insp.get_columns('material')] if insp.has_table('material') else []
     if 'part_number' not in material_cols and insp.has_table('material'):
         with db.engine.connect() as conn:
