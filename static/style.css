@@ -101,3 +101,19 @@ text-decoration:underline;
 .pill-btn.danger{
   background:#b33131;
 }
+
+.pill{
+  display:inline-block;
+  min-width:50px;
+  text-align:center;
+  padding:6px 10px;
+  border-radius:999px;
+  font-weight:bold;
+  color:white;
+}
+.pill.available{
+  background:#1e9e4a;
+}
+.pill.booked{
+  background:#c13535;
+}

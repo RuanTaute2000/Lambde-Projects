@@ -39,6 +39,7 @@
       <th>Tool Type</th>
       <th>Serial Number</th>
       <th>Status</th>
+      <th>In/Out</th>
       <th>Action</th>
       {% if role in ["Project Lead","Workshop Manager"] %}<th>Manage</th>{% endif %}
     </tr>
@@ -52,6 +53,13 @@
           Available
         {% else %}
           Booked by {{tool.booked_by}}
+        {% endif %}
+      </td>
+      <td>
+        {% if tool.status == "Available" %}
+          <span class="pill available">IN</span>
+        {% else %}
+          <span class="pill booked">OUT</span>
         {% endif %}
       </td>
       <td>
