@@ -27,6 +27,23 @@ def ensure_schema():
     except Exception as exc:
         print("DB unavailable, skipping schema check:", exc)
         return
+
+    def widen_varchar(table_name, column_name, target_length):
+        if not insp.has_table(table_name):
+            return
+        columns = {col["name"]: col for col in insp.get_columns(table_name)}
+        if column_name not in columns:
+            return
+        current_length = getattr(columns[column_name]["type"], "length", None)
+        if current_length is not None and current_length >= target_length:
+            return
+        if db.engine.dialect.name == "postgresql":
+            with db.engine.connect() as conn:
+                conn.execute(db.text(
+                    f"ALTER TABLE {table_name} ALTER COLUMN {column_name} TYPE VARCHAR({target_length})"
+                ))
+                conn.commit()
+
     material_cols = [c['name'] for c in insp.get_columns('material')] if insp.has_table('material') else []
     if 'part_number' not in material_cols and insp.has_table('material'):
         with db.engine.connect() as conn:
@@ -36,6 +53,8 @@ def ensure_schema():
         with db.engine.connect() as conn:
             conn.execute(db.text("ALTER TABLE material ADD COLUMN category_id INTEGER"))
             conn.commit()
+    widen_varchar("material", "name", 255)
+    widen_varchar("material_log", "material_name", 255)
     # drop make column if exists (legacy)
     tool_cols = [c['name'] for c in insp.get_columns('tool')] if insp.has_table('tool') else []
     if 'make' in tool_cols:
@@ -133,7 +152,7 @@ class Material(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
     category_id = db.Column(db.Integer, db.ForeignKey('project_category.id'), nullable=True)
-    name = db.Column(db.String(100))
+    name = db.Column(db.String(255))
     part_number = db.Column(db.String(100))
     quantity = db.Column(db.Integer, default=0)
     project = db.relationship('Project', backref=db.backref('materials', lazy=True))
@@ -142,7 +161,7 @@ class Material(db.Model):
 class MaterialLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
-    material_name = db.Column(db.String(100))
+    material_name = db.Column(db.String(255))
     part_number = db.Column(db.String(100))
     quantity = db.Column(db.Integer)
     taken_by = db.Column(db.String(100))
