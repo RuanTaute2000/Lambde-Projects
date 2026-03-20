@@ -21,27 +21,29 @@
     <a href="/projects" class="back-btn">Back</a>
   </div>
 
-  <h2 style="text-align:center;">{{ project.name }}</h2>
-  <p style="text-align:center;">{{ project.description }}</p>
-
-  <div style="text-align:center; margin-bottom:20px;">
-    <a class="pill-btn" href="/project/{{project.id}}/logs">📜 Material Log</a>
-    {% if role in ["Project Lead", "Workshop Manager"] %}
-      | <span class="pill-btn danger" onclick="if(confirm('Delete this project?')) location.href='/delete_project/{{project.id}}';">🗑 Delete Project</span>
-    {% endif %}
-  </div>
-
-  <div class="center" style="margin-top:20px;">
-    <input id="material-search" placeholder="Search materials..." oninput="filterMaterials()">
+  <div class="project-topbar">
+    <div class="project-meta">
+      <p class="project-meta-text">{{ project.name }}</p>
+      <p class="project-meta-text">{{ project.description }}</p>
+    </div>
+    <div class="project-search">
+      <input id="material-search" placeholder="Search materials..." oninput="filterMaterials()">
+    </div>
+    <div class="project-actions">
+      <a class="pill-btn" href="/project/{{project.id}}/logs">Material Log</a>
+      {% if role in ["Project Lead", "Workshop Manager"] %}
+      <span class="pill-btn danger" onclick="if(confirm('Delete this project?')) location.href='/delete_project/{{project.id}}';">Delete Project</span>
+      {% endif %}
+    </div>
   </div>
 
   {% if role in ["Project Lead", "Workshop Manager"] %}
-  <form action="/add_category/{{project.id}}" method="post" class="center">
+  <form action="/add_category/{{project.id}}" method="post" class="project-form">
     <input name="name" placeholder="New Category Name" required>
     <button>Add Category</button>
   </form>
 
-  <form action="/add_material/{{project.id}}" method="post" class="center">
+  <form action="/add_material/{{project.id}}" method="post" class="project-form compact">
     <select name="category_id">
       <option value="">No Category</option>
       {% for category in categories %}

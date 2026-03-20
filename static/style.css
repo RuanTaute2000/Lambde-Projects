@@ -117,3 +117,74 @@ text-decoration:underline;
 .pill.booked{
   background:#c13535;
 }
+
+.project-topbar{
+  width:90%;
+  margin:24px auto 10px auto;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:20px;
+}
+
+.project-meta{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  flex:1;
+  min-width:0;
+}
+
+.project-meta-text{
+  margin:0;
+  font-size:28px;
+  font-weight:bold;
+}
+
+.project-search{
+  flex:1;
+  display:flex;
+  justify-content:center;
+}
+
+.project-search input{
+  width:320px;
+  max-width:100%;
+}
+
+.project-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex:1;
+}
+
+.project-form{
+  width:320px;
+  margin:20px auto 0 auto;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.project-form.compact{
+  margin-top:12px;
+}
+
+@media (max-width: 900px){
+  .project-topbar{
+    flex-direction:column;
+    align-items:stretch;
+  }
+
+  .project-meta,
+  .project-actions,
+  .project-search{
+    justify-content:flex-start;
+  }
+
+  .project-meta{
+    flex-wrap:wrap;
+  }
+}
