@@ -32,6 +32,10 @@ def ensure_schema():
         with db.engine.connect() as conn:
             conn.execute(db.text("ALTER TABLE material ADD COLUMN part_number VARCHAR(100)"))
             conn.commit()
+    if 'category_id' not in material_cols and insp.has_table('material'):
+        with db.engine.connect() as conn:
+            conn.execute(db.text("ALTER TABLE material ADD COLUMN category_id INTEGER"))
+            conn.commit()
     # drop make column if exists (legacy)
     tool_cols = [c['name'] for c in insp.get_columns('tool')] if insp.has_table('tool') else []
     if 'make' in tool_cols:
@@ -119,13 +123,21 @@ class Project(db.Model):
     name = db.Column(db.String(100), unique=True)
     description = db.Column(db.String(255))
 
+class ProjectCategory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    name = db.Column(db.String(100))
+    project = db.relationship('Project', backref=db.backref('categories', lazy=True))
+
 class Material(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     project_id = db.Column(db.Integer, db.ForeignKey('project.id'))
+    category_id = db.Column(db.Integer, db.ForeignKey('project_category.id'), nullable=True)
     name = db.Column(db.String(100))
     part_number = db.Column(db.String(100))
     quantity = db.Column(db.Integer, default=0)
     project = db.relationship('Project', backref=db.backref('materials', lazy=True))
+    category = db.relationship('ProjectCategory', backref=db.backref('materials', lazy=True))
 
 class MaterialLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -342,12 +354,40 @@ def project_detail(project_id):
     if "user" not in session:
         return redirect("/")
     project = Project.query.get_or_404(project_id)
+    categories = ProjectCategory.query.filter_by(project_id=project_id).order_by(ProjectCategory.name).all()
+    grouped_materials = []
+    uncategorized = []
+    for category in categories:
+        materials = Material.query.filter_by(project_id=project_id, category_id=category.id)\
+            .order_by(Material.name).all()
+        grouped_materials.append({"category": category, "materials": materials})
+    uncategorized = Material.query.filter_by(project_id=project_id, category_id=None)\
+        .order_by(Material.name).all()
     return render_template(
         "project_detail.html",
         project=project,
+        categories=categories,
+        grouped_materials=grouped_materials,
+        uncategorized=uncategorized,
         role=session.get("role"),
         user=session.get("user")
     )
+
+
+@app.route("/add_category/<int:project_id>", methods=["POST"])
+def add_category(project_id):
+    if "user" not in session:
+        return redirect("/")
+    if session.get("role") not in ["Project Lead", "Workshop Manager"]:
+        return "Not allowed"
+
+    name = request.form["name"].strip()
+    if name:
+        existing = ProjectCategory.query.filter_by(project_id=project_id, name=name).first()
+        if not existing:
+            db.session.add(ProjectCategory(project_id=project_id, name=name))
+            db.session.commit()
+    return redirect(f"/project/{project_id}")
 
 
 @app.route("/add_material/<int:project_id>", methods=["POST"])
@@ -359,6 +399,7 @@ def add_material(project_id):
 
     material = Material(
         project_id=project_id,
+        category_id=request.form.get("category_id") or None,
         name=request.form["name"],
         part_number=request.form.get("part_number", ""),
         quantity=int(request.form.get("quantity", 0))
