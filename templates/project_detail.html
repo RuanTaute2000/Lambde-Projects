@@ -58,7 +58,7 @@
   {% endif %}
 
   {% for group in grouped_materials %}
-  <h3 style="width:90%;margin:30px auto 10px auto;">{{ group.category.name }}</h3>
+  <div class="category-header">{{ group.category.name }}</div>
   <table>
     <tr>
       <th>Material</th>
@@ -85,7 +85,7 @@
   </table>
   {% endfor %}
 
-  <h3 style="width:90%;margin:30px auto 10px auto;">Uncategorized</h3>
+  <div class="category-header">Uncategorized</div>
   <table>
     <tr>
       <th>Material</th>

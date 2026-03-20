@@ -172,6 +172,17 @@ text-decoration:underline;
   margin-top:12px;
 }
 
+.category-header{
+  width:90%;
+  margin:30px auto 0 auto;
+  padding:12px 16px;
+  background:#2b2b2b;
+  border-radius:10px 10px 0 0;
+  box-sizing:border-box;
+  font-size:18px;
+  font-weight:bold;
+}
+
 @media (max-width: 900px){
   .project-topbar{
     flex-direction:column;
