@@ -486,17 +486,14 @@ def delete_project(project_id):
     if session.get("role") not in ["Project Lead", "Workshop Manager"]:
         return "Not allowed"
     project = Project.query.get_or_404(project_id)
-    # remove materials and log deletion
+
+    # A project delete must clear its dependent rows first, otherwise
+    # the database will reject the project delete due to foreign keys.
+    MaterialLog.query.filter_by(project_id=project.id).delete()
     for m in project.materials:
-        db.session.add(MaterialLog(
-            project_id=project.id,
-            material_name=m.name,
-            part_number=m.part_number,
-            quantity=m.quantity,
-            taken_by=session.get("user"),
-            action="Deleted"
-        ))
         db.session.delete(m)
+    for category in project.categories:
+        db.session.delete(category)
     db.session.delete(project)
     db.session.commit()
     return redirect("/projects")
